@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, CheckCircle } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,7 +15,16 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verified, setVerified] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("verified") === "true") {
+      setVerified(true);
+      setIsLogin(true);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +47,7 @@ const Auth = () => {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/login?verified=true`,
           },
         });
         if (error) throw error;
@@ -72,6 +81,16 @@ const Auth = () => {
         </div>
 
         <div className="glass-card p-8">
+          {verified && (
+            <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
+              <CheckCircle className="text-green-500 shrink-0" size={20} />
+              <div>
+                <p className="text-sm font-medium text-green-400">Email verified successfully!</p>
+                <p className="text-xs text-muted-foreground">Please sign in to continue.</p>
+              </div>
+            </div>
+          )}
+
           <h2 className="text-xl font-semibold text-foreground mb-6">
             {isLogin ? "Sign in to your account" : "Create your account"}
           </h2>
