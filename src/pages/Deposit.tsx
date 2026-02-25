@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
+import DepositReceipt from "@/components/DepositReceipt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +10,11 @@ import { toast } from "sonner";
 import { ArrowDownToLine, Zap } from "lucide-react";
 
 const Deposit = () => {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +61,18 @@ const Deposit = () => {
       if (balanceError) throw balanceError;
 
       await refreshProfile();
-      toast.success(`Successfully deposited $${depositAmount.toFixed(2)}! Your balance increased by $${displayedAmount.toFixed(2)} (4x growth)`);
+
+      setReceiptData({
+        transactionId: `PP-${Date.now()}`,
+        amount: depositAmount,
+        displayedAmount,
+        date: new Date().toISOString(),
+        email: profile?.email || "",
+        name: profile?.full_name || "User",
+      });
+      setShowReceipt(true);
+
+      toast.success(`Successfully deposited $${depositAmount.toFixed(2)}!`);
       setAmount("");
     } catch (error: any) {
       toast.error(error.message || "Deposit failed");
@@ -157,6 +171,12 @@ const Deposit = () => {
           </form>
         </div>
       </div>
+
+      <DepositReceipt
+        open={showReceipt}
+        onClose={() => setShowReceipt(false)}
+        data={receiptData}
+      />
     </DashboardLayout>
   );
 };
