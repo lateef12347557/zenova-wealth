@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
-import { TrendingUp, ArrowDownToLine, ArrowUpFromLine, DollarSign } from "lucide-react";
+import { TrendingUp, ArrowDownToLine, ArrowUpFromLine, DollarSign, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -10,6 +10,9 @@ const Dashboard = () => {
   const { profile, user } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hideAmounts, setHideAmounts] = useState(false);
+
+  const mask = (val: string) => hideAmounts ? "••••••" : val;
 
   useEffect(() => {
     if (!user) return;
@@ -31,7 +34,7 @@ const Dashboard = () => {
   const stats = [
     {
       label: "Total Balance",
-      value: `$${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+      value: mask(`$${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}`),
       icon: DollarSign,
       accent: true,
     },
@@ -54,11 +57,20 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">
-          Welcome back, <span className="text-gradient-gold">{profile?.full_name || "Investor"}</span>
-        </h1>
-        <p className="text-muted-foreground mt-1">Here's your portfolio overview</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Welcome back, <span className="text-gradient-gold">{profile?.full_name || "Investor"}</span>
+          </h1>
+          <p className="text-muted-foreground mt-1">Here's your portfolio overview</p>
+        </div>
+        <button
+          onClick={() => setHideAmounts(!hideAmounts)}
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          title={hideAmounts ? "Show amounts" : "Hide amounts"}
+        >
+          {hideAmounts ? <EyeOff size={20} /> : <Eye size={20} />}
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -105,7 +117,7 @@ const Dashboard = () => {
             <div>
               <h3 className="font-semibold text-foreground">Request Withdrawal</h3>
               <p className="text-sm text-muted-foreground">
-                {balance >= 20000 ? "You're eligible to withdraw" : `$${(20000 - balance).toLocaleString()} more to unlock`}
+                {balance >= 20000 ? "You're eligible to withdraw" : hideAmounts ? "••••••" : `$${(20000 - balance).toLocaleString()} more to unlock`}
               </p>
             </div>
           </div>
@@ -149,7 +161,7 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-foreground">
-                    ${Number(tx.displayed_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    {mask(`$${Number(tx.displayed_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}`)}
                   </p>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     tx.status === "completed" ? "bg-success/10 text-success" :
